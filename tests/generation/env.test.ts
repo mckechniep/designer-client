@@ -23,4 +23,15 @@ describe("parseEnv", () => {
 
     expect(env.GENERATION_PROVIDER).toBe("openai");
   });
+
+  it("requires an OpenAI API key when the OpenAI provider is enabled", () => {
+    expect(() =>
+      parseEnv({
+        NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co",
+        NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "public-key",
+        ASSET_BUCKET: "asset-generations",
+        GENERATION_PROVIDER: "openai",
+      }),
+    ).toThrow("OPENAI_API_KEY is required when GENERATION_PROVIDER=openai");
+  });
 });
