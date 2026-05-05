@@ -87,7 +87,7 @@ Create this structure:
 │   │   ├── supabase/client.ts
 │   │   ├── supabase/server.ts
 │   │   └── supabase/types.ts
-│   └── middleware.ts
+│   └── proxy.ts
 └── tests/
     ├── generation/download-package.test.ts
     ├── generation/env.test.ts
@@ -251,7 +251,7 @@ git commit -m "chore: scaffold master asset studio app"
 - Create: `src/lib/env.ts`
 - Create: `src/lib/supabase/client.ts`
 - Create: `src/lib/supabase/server.ts`
-- Create: `src/middleware.ts`
+- Create: `src/proxy.ts`
 - Test: `tests/generation/env.test.ts`
 
 - [ ] **Step 1: Write failing env tests**
@@ -395,16 +395,16 @@ export function createServiceSupabaseClient() {
 }
 ```
 
-- [ ] **Step 6: Add middleware session refresh**
+- [ ] **Step 6: Add Proxy session refresh**
 
-Create `src/middleware.ts`:
+Create `src/proxy.ts`:
 
 ```ts
 import { type NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { env } from "@/lib/env";
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -449,7 +449,7 @@ Expected: both pass.
 - [ ] **Step 8: Commit**
 
 ```bash
-git add .env.example src/lib/env.ts src/lib/supabase src/middleware.ts tests/generation/env.test.ts
+git add .env.example src/lib/env.ts src/lib/supabase src/proxy.ts tests/generation/env.test.ts
 git commit -m "chore: add environment and supabase clients"
 ```
 
