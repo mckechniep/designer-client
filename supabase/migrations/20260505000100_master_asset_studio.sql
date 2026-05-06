@@ -124,8 +124,11 @@ create table public.download_events (
 
 create index user_profiles_client_profile_id_idx on public.user_profiles(client_profile_id);
 create index projects_client_profile_id_idx on public.projects(client_profile_id);
-create index design_briefs_project_id_idx on public.design_briefs(project_id);
+create unique index design_briefs_project_id_key on public.design_briefs(project_id);
 create index design_directions_project_id_idx on public.design_directions(project_id);
+create unique index design_directions_one_selected_per_project_idx
+  on public.design_directions(project_id)
+  where is_selected;
 create index asset_generations_direction_id_idx on public.asset_generations(design_direction_id);
 create index asset_files_generation_id_idx on public.asset_files(generation_id);
 create index download_events_generation_id_idx on public.download_events(generation_id);
@@ -203,20 +206,69 @@ on public.generation_limits for delete
 to authenticated
 using (private.current_user_role() = 'admin');
 
-create policy "clients can manage own projects"
-on public.projects for all
+create policy "clients can read own projects"
+on public.projects for select
 to authenticated
 using (
   private.current_user_role() = 'admin'
   or client_profile_id = private.current_client_profile_id()
+);
+
+create policy "clients can insert own projects"
+on public.projects for insert
+to authenticated
+with check (
+  private.current_user_role() = 'admin'
+  or (
+    client_profile_id = private.current_client_profile_id()
+    and created_by = (select auth.uid())
+  )
+);
+
+create policy "clients can update own projects"
+on public.projects for update
+to authenticated
+using (
+  private.current_user_role() = 'admin'
+  or (
+    client_profile_id = private.current_client_profile_id()
+    and created_by = (select auth.uid())
+  )
 )
 with check (
   private.current_user_role() = 'admin'
-  or client_profile_id = private.current_client_profile_id()
+  or (
+    client_profile_id = private.current_client_profile_id()
+    and created_by = (select auth.uid())
+  )
 );
 
-create policy "clients can manage own briefs"
-on public.design_briefs for all
+create policy "clients can read own briefs"
+on public.design_briefs for select
+to authenticated
+using (
+  private.current_user_role() = 'admin'
+  or exists (
+    select 1 from public.projects
+    where projects.id = design_briefs.project_id
+    and projects.client_profile_id = private.current_client_profile_id()
+  )
+);
+
+create policy "clients can insert own briefs"
+on public.design_briefs for insert
+to authenticated
+with check (
+  private.current_user_role() = 'admin'
+  or exists (
+    select 1 from public.projects
+    where projects.id = design_briefs.project_id
+    and projects.client_profile_id = private.current_client_profile_id()
+  )
+);
+
+create policy "clients can update own briefs"
+on public.design_briefs for update
 to authenticated
 using (
   private.current_user_role() = 'admin'
@@ -235,8 +287,20 @@ with check (
   )
 );
 
-create policy "clients can manage own directions"
-on public.design_directions for all
+create policy "clients can read own directions"
+on public.design_directions for select
+to authenticated
+using (
+  private.current_user_role() = 'admin'
+  or exists (
+    select 1 from public.projects
+    where projects.id = design_directions.project_id
+    and projects.client_profile_id = private.current_client_profile_id()
+  )
+);
+
+create policy "clients can update selected own directions"
+on public.design_directions for update
 to authenticated
 using (
   private.current_user_role() = 'admin'
