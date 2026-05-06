@@ -10,6 +10,7 @@ describe("parseEnv", () => {
     });
 
     expect(env.GENERATION_PROVIDER).toBe("mock");
+    expect(env.NEXT_PUBLIC_SITE_URL).toBe("http://127.0.0.1:3000");
   });
 
   it("accepts openai as a provider", () => {

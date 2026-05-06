@@ -3,6 +3,7 @@ import { z } from "zod";
 const envSchema = z.object({
   NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: z.string().min(1),
+  NEXT_PUBLIC_SITE_URL: z.string().url().default("http://127.0.0.1:3000"),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
   ASSET_BUCKET: z.string().min(1).default("asset-generations"),
   GENERATION_PROVIDER: z.enum(["mock", "openai"]).default("mock"),
@@ -38,6 +39,9 @@ export const env = {
   },
   get NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY() {
     return getEnv().NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  },
+  get NEXT_PUBLIC_SITE_URL() {
+    return getEnv().NEXT_PUBLIC_SITE_URL;
   },
   get SUPABASE_SERVICE_ROLE_KEY() {
     return getEnv().SUPABASE_SERVICE_ROLE_KEY;
