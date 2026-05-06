@@ -299,26 +299,6 @@ using (
   )
 );
 
-create policy "clients can update selected own directions"
-on public.design_directions for update
-to authenticated
-using (
-  private.current_user_role() = 'admin'
-  or exists (
-    select 1 from public.projects
-    where projects.id = design_directions.project_id
-    and projects.client_profile_id = private.current_client_profile_id()
-  )
-)
-with check (
-  private.current_user_role() = 'admin'
-  or exists (
-    select 1 from public.projects
-    where projects.id = design_directions.project_id
-    and projects.client_profile_id = private.current_client_profile_id()
-  )
-);
-
 create policy "clients can read own generations"
 on public.asset_generations for select
 to authenticated
