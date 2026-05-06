@@ -24,3 +24,24 @@ export interface MasterAssetPromptInput {
   brandNotes: string;
   feedbackInterpretation: Pick<StructuredInterpretation, "changes" | "locked">;
 }
+
+export interface ThemeSpec {
+  colors: {
+    primary: string;
+    accent: string;
+    background: string;
+    text: string;
+  };
+  typography: {
+    heading: string;
+    body: string;
+  };
+  notes: string[];
+}
+
+export interface ButtonSpec {
+  normal: Record<string, string>;
+  pressed: Record<string, string>;
+  disabled: Record<string, string>;
+  css: string;
+}
