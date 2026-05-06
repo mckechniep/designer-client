@@ -1,6 +1,14 @@
 export type UserRole = "client" | "admin";
 export type GenerationStatus = "queued" | "running" | "succeeded" | "failed";
 export type AssetKind =
+  | "palette_light"
+  | "palette_dark"
+  | "buttons_light"
+  | "buttons_dark"
+  | "icon_mark_light"
+  | "icon_mark_dark"
+  | "screen_plain_light"
+  | "screen_plain_dark"
   | "master_background"
   | "splash"
   | "button_preview"

@@ -37,6 +37,7 @@ export class MockImageProvider implements ImageGenerationProvider {
     const bytes = await sharp(Buffer.from(svg)).png().toBuffer();
 
     return {
+      kind: "master_background",
       fileName:
         request.quality === "final"
           ? "master-background.png"
