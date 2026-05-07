@@ -1,3 +1,6 @@
+delete from supabase_migrations.schema_migrations
+where version = '20260506111014';
+
 do $$
 begin
   if exists (

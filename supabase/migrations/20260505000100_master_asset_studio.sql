@@ -1,5 +1,8 @@
 create extension if not exists pgcrypto;
 
+delete from supabase_migrations.schema_migrations
+where version = '20260505000100';
+
 do $$
 begin
   if not exists (
