@@ -4,13 +4,13 @@ import type {
   ResponseOutputItem,
   Tool,
 } from "openai/resources/responses/responses";
-import sharp from "sharp";
 import { env } from "@/lib/env";
 import type {
   GeneratedImage,
   ImageGenerationProvider,
   ImageGenerationRequest,
 } from "./provider";
+import sharp from "./svg-renderer";
 
 const GPT_IMAGE_2_MASTER_SIZE = "1440x2560";
 const STANDARD_PORTRAIT_SIZE = "1024x1536";

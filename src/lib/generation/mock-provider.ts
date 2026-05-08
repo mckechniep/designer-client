@@ -1,9 +1,9 @@
-import sharp from "sharp";
 import type {
   GeneratedImage,
   ImageGenerationProvider,
   ImageGenerationRequest,
 } from "./provider";
+import { renderSvgToPng } from "./svg-renderer";
 
 export class MockImageProvider implements ImageGenerationProvider {
   name = "mock";
@@ -40,7 +40,7 @@ export class MockImageProvider implements ImageGenerationProvider {
       </svg>
     `;
 
-    const bytes = await sharp(Buffer.from(svg)).png().toBuffer();
+    const bytes = await renderSvgToPng({ height, svg, width });
 
     return {
       kind: request.kind ?? "master_background",

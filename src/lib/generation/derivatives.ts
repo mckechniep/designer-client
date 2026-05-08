@@ -1,6 +1,6 @@
-import sharp from "sharp";
 import { createDownloadPackage } from "./download-package";
 import { parseFontSystem, svgFontStack } from "./fonts";
+import sharp, { renderSvgToPng } from "./svg-renderer";
 import {
   paletteModeToAssetPalette,
   type PaletteModeSpec,
@@ -781,7 +781,7 @@ async function imageFromSvg({
   svg: string;
   width: number;
 }): Promise<GeneratedImage> {
-  const bytes = await sharp(Buffer.from(svg)).png().toBuffer();
+  const bytes = await renderSvgToPng({ height, svg, width });
 
   return {
     kind,

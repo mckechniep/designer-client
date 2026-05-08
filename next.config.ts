@@ -1,7 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  outputFileTracingIncludes: {
+    "/*": ["src/lib/generation/font-assets/**/*"],
+  },
 };
 
 export default nextConfig;

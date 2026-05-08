@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 import JSZip from "jszip";
-import sharp from "sharp";
 import {
   createAssetPackage,
   createButtonSheetSvg,
 } from "@/lib/generation/derivatives";
 import { MockImageProvider } from "@/lib/generation/mock-provider";
+import sharp, { renderSvgToPng } from "@/lib/generation/svg-renderer";
 import { buildPaletteSystem, paletteModeToAssetPalette } from "@/lib/palette/spec";
 
 describe("asset package generation", () => {
@@ -214,6 +214,25 @@ describe("asset package generation", () => {
     expect(svg).not.toContain("#075965");
   });
 
+  it("renders supported bundled font families in generated SVG PNG output", async () => {
+    const inter = await renderSvgToPng({
+      height: 180,
+      svg: fontProbeSvg("Inter"),
+      width: 720,
+    });
+    const jetbrainsMono = await renderSvgToPng({
+      height: 180,
+      svg: fontProbeSvg("JetBrains Mono"),
+      width: 720,
+    });
+    const interPixels = await sharp(inter).raw().toBuffer();
+    const jetbrainsPixels = await sharp(jetbrainsMono).raw().toBuffer();
+
+    expect(countDifferentBytes(interPixels, jetbrainsPixels)).toBeGreaterThan(
+      4_000,
+    );
+  });
+
   it("creates a downloadable zip with manifest and static image assets", async () => {
     const provider = new MockImageProvider();
     const master = await provider.generateMasterAsset({
@@ -281,4 +300,25 @@ function findFile(
   }
 
   return file;
+}
+
+function fontProbeSvg(fontFamily: string) {
+  return `
+    <svg width="720" height="180" viewBox="0 0 720 180" xmlns="http://www.w3.org/2000/svg">
+      <rect width="100%" height="100%" fill="#fff"/>
+      <text x="40" y="116" fill="#111" font-size="74" font-family="${fontFamily}" font-weight="700">Button Text</text>
+    </svg>
+  `;
+}
+
+function countDifferentBytes(left: Buffer, right: Buffer) {
+  let different = 0;
+
+  for (let index = 0; index < left.length; index += 1) {
+    if (left[index] !== right[index]) {
+      different += 1;
+    }
+  }
+
+  return different;
 }
