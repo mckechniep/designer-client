@@ -18,7 +18,10 @@ export async function createDownloadPackage(
   const zip = new JSZip();
 
   for (const item of input.manifest.files) {
-    const file = input.files.find((candidate) => candidate.kind === item.kind);
+    const file = input.files.find(
+      (candidate) =>
+        candidate.kind === item.kind && candidate.fileName === item.fileName,
+    );
 
     if (file) {
       zip.file(item.path, file.bytes);
@@ -61,7 +64,7 @@ function createReadme(
     "",
     files,
     "",
-    "Use the master/background assets as source material for crops, the light/dark screen plains as implementation-ready mobile backgrounds, and the button sheets/palettes as visual handoff references.",
+    "Use the master/light source screen and dark screen as the screen visual sources. Use the light/dark button sheets and palette sheets as implementation handoff references. Icon sheets are canonical concept references unless a later package includes structured SVG exports.",
   ].join("\n");
 }
 

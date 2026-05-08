@@ -10,8 +10,29 @@ interface ProjectListItem {
   app_category: string;
 }
 
-export default async function ProjectsPage() {
+type ProjectListSearchParams = Promise<{
+  deleted?: string | string[] | undefined;
+  error?: string | string[] | undefined;
+}>;
+
+const errorMessages: Record<string, string> = {
+  "project-not-found": "That project is unavailable or already deleted.",
+};
+
+function getParam(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export default async function ProjectsPage({
+  searchParams,
+}: {
+  searchParams: ProjectListSearchParams;
+}) {
   const user = await requireUser();
+  const resolvedSearchParams = await searchParams;
+  const deleted = getParam(resolvedSearchParams.deleted) === "1";
+  const error = getParam(resolvedSearchParams.error);
+  const message = error ? errorMessages[error] : undefined;
   const supabase = await createServerSupabaseClient();
   const { data: projects } = await supabase
     .from("projects")
@@ -38,6 +59,24 @@ export default async function ProjectsPage() {
           New project
         </Link>
       </div>
+
+      {deleted ? (
+        <div
+          className="mt-6 rounded-md border border-cyan-900/80 bg-cyan-950/35 px-4 py-3 text-sm text-cyan-100"
+          role="status"
+        >
+          Project deleted.
+        </div>
+      ) : null}
+
+      {message ? (
+        <div
+          className="mt-6 rounded-md border border-red-800/80 bg-red-950/50 px-4 py-3 text-sm text-red-100"
+          role="alert"
+        >
+          {message}
+        </div>
+      ) : null}
 
       {projects && projects.length > 0 ? (
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

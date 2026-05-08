@@ -9,7 +9,10 @@ const envSchema = z.object({
   GENERATION_PROVIDER: z.enum(["mock", "openai"]).default("mock"),
   OPENAI_API_KEY: z.string().min(1).optional(),
   OPENAI_IMAGE_MODEL: z.string().min(1).default("gpt-image-2"),
+  OPENAI_PALETTE_MODEL: z.string().min(1).default("gpt-4.1"),
+  OPENAI_RESPONSES_MODEL: z.string().min(1).default("gpt-5.5"),
   INTERNAL_UNLIMITED_EMAILS: z.string().default(""),
+  AUTH_AUTO_PROVISION_CLIENTS: z.string().default("false"),
 });
 
 export type AppEnv = z.infer<typeof envSchema>;
@@ -58,7 +61,16 @@ export const env = {
   get OPENAI_IMAGE_MODEL() {
     return getEnv().OPENAI_IMAGE_MODEL;
   },
+  get OPENAI_PALETTE_MODEL() {
+    return getEnv().OPENAI_PALETTE_MODEL;
+  },
+  get OPENAI_RESPONSES_MODEL() {
+    return getEnv().OPENAI_RESPONSES_MODEL;
+  },
   get INTERNAL_UNLIMITED_EMAILS() {
     return getEnv().INTERNAL_UNLIMITED_EMAILS;
+  },
+  get AUTH_AUTO_PROVISION_CLIENTS() {
+    return getEnv().AUTH_AUTO_PROVISION_CLIENTS;
   },
 } satisfies AppEnv;

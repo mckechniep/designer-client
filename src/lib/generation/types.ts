@@ -21,6 +21,14 @@ export interface MasterAssetPromptInput {
   likedColors: string[];
   dislikedColors: string[];
   fontPreferences: string;
+  paletteSystem: string;
+  referenceAnalysis: string;
+  referenceLinks: string[];
+  selectedDirection: {
+    summary: string;
+    title: string;
+  };
+  visualDislikes: string;
   brandNotes: string;
   feedbackInterpretation: Pick<StructuredInterpretation, "changes" | "locked">;
 }

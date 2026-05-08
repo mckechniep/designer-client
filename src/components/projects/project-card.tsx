@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { DeleteProjectForm } from "@/components/projects/delete-project-form";
 
 interface ProjectCardProps {
   id: string;
@@ -8,10 +9,7 @@ interface ProjectCardProps {
 
 export function ProjectCard({ id, name, category }: ProjectCardProps) {
   return (
-    <Link
-      href={`/projects/${id}`}
-      className="group grid min-h-36 grid-rows-[1fr_auto] rounded-md border border-zinc-800 bg-zinc-900/50 p-5 transition hover:border-zinc-600 hover:bg-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-500"
-    >
+    <article className="grid min-h-44 grid-rows-[1fr_auto] rounded-md border border-zinc-800 bg-zinc-900/50 p-5">
       <div>
         <h2 className="line-clamp-2 text-base font-semibold leading-6 text-zinc-50">
           {name}
@@ -20,9 +18,15 @@ export function ProjectCard({ id, name, category }: ProjectCardProps) {
           {category}
         </p>
       </div>
-      <span className="mt-5 text-sm font-medium text-zinc-300 transition group-hover:text-zinc-50">
-        Open project
-      </span>
-    </Link>
+      <div className="mt-5 grid gap-2">
+        <Link
+          href={`/projects/${id}`}
+          className="inline-flex items-center justify-center rounded-md border border-zinc-700 px-4 py-2.5 text-sm font-semibold text-zinc-100 transition hover:border-zinc-500 hover:bg-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-500"
+        >
+          Open project
+        </Link>
+        <DeleteProjectForm projectId={id} />
+      </div>
+    </article>
   );
 }
