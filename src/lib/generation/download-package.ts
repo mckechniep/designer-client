@@ -64,7 +64,7 @@ function createReadme(
     "",
     files,
     "",
-    "Use the master/light source screen and dark screen as the screen visual sources. Use the light/dark button sheets and palette sheets as implementation handoff references. Icon sheets are canonical concept references unless a later package includes structured SVG exports.",
+    "Use the master/light source background and dark source background as textless visual foundations for coded UI. Use the palette sheets as implementation handoff references. More background plates, in-app imagery, fonts, and icons can be generated later as optional passes.",
   ].join("\n");
 }
 

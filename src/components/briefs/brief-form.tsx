@@ -1,6 +1,11 @@
 "use client";
 
-import { useActionState, useState, type ChangeEvent } from "react";
+import {
+  useActionState,
+  useState,
+  useTransition,
+  type ChangeEvent,
+} from "react";
 import {
   createProject,
   previewProjectPalette,
@@ -33,296 +38,20 @@ const initialPalettePreviewState: PalettePreviewState = {
   status: "idle",
 };
 
-interface FontPreset {
-  bodyFont: string;
-  category: string;
-  displayFont: string;
-  label: string;
-  note: string;
-  utilityFont: string;
-}
-
-const fontPresets: FontPreset[] = [
-  {
-    bodyFont: "Inter",
-    category: "Modern SaaS / dev tool",
-    displayFont: "Instrument Serif",
-    label: "Inter + JetBrains Mono + Instrument Serif",
-    note: "Clean SaaS body type, mono data details, and an editorial accent for hero or blog moments.",
-    utilityFont: "JetBrains Mono",
-  },
-  {
-    bodyFont: "Geist",
-    category: "Modern SaaS / dev tool",
-    displayFont: "Instrument Serif",
-    label: "Geist + Geist Mono + Instrument Serif",
-    note: "Vercel-adjacent product polish with a warmer editorial headline accent.",
-    utilityFont: "Geist Mono",
-  },
-  {
-    bodyFont: "General Sans",
-    category: "Modern SaaS / dev tool",
-    displayFont: "Cabinet Grotesk",
-    label: "General Sans + Cabinet Grotesk + JetBrains Mono",
-    note: "Contemporary product sans pairing with a reliable technical mono.",
-    utilityFont: "JetBrains Mono",
-  },
-  {
-    bodyFont: "Sohne",
-    category: "Modern SaaS / dev tool",
-    displayFont: "IBM Plex Serif",
-    label: "Sohne + IBM Plex Mono + IBM Plex Serif",
-    note: "Crisp product UI with cohesive Plex support for technical and editorial moments.",
-    utilityFont: "IBM Plex Mono",
-  },
-  {
-    bodyFont: "Inter",
-    category: "Editorial taste",
-    displayFont: "Instrument Serif",
-    label: "Instrument Serif + Inter + JetBrains Mono",
-    note: "Tasteful editorial display type with a very safe UI body and mono metadata.",
-    utilityFont: "JetBrains Mono",
-  },
-  {
-    bodyFont: "Inter",
-    category: "Editorial taste",
-    displayFont: "Fraunces",
-    label: "Fraunces + Inter + Geist Mono",
-    note: "Expressive but readable, with mono support for captions, codes, and small metadata.",
-    utilityFont: "Geist Mono",
-  },
-  {
-    bodyFont: "DM Sans",
-    category: "Editorial taste",
-    displayFont: "DM Serif Display",
-    label: "DM Serif Display + DM Sans + DM Mono",
-    note: "A tidy same-family system for editorial warmth, UI clarity, and utility text.",
-    utilityFont: "DM Mono",
-  },
-  {
-    bodyFont: "Untitled Sans",
-    category: "Editorial taste",
-    displayFont: "Tiempos Headline",
-    label: "Tiempos Headline + Untitled Sans + Berkeley Mono",
-    note: "Premium editorial direction with restrained body type and strong technical contrast.",
-    utilityFont: "Berkeley Mono",
-  },
-  {
-    bodyFont: "Space Grotesk",
-    category: "Neon / retro / synthwave",
-    displayFont: "Monoton",
-    label: "Monoton + Space Grotesk + Space Mono",
-    note: "Retro display energy balanced by a usable body sans and matching mono.",
-    utilityFont: "Space Mono",
-  },
-  {
-    bodyFont: "Space Grotesk",
-    category: "Neon / retro / synthwave",
-    displayFont: "Audiowide",
-    label: "Audiowide + Space Grotesk + Space Mono",
-    note: "Sharper synthwave tone with cohesive Space-family support.",
-    utilityFont: "Space Mono",
-  },
-  {
-    bodyFont: "Rajdhani",
-    category: "Neon / retro / synthwave",
-    displayFont: "Orbitron",
-    label: "Orbitron + Rajdhani + Share Tech Mono",
-    note: "HUD, terminal, and dashboard cues without forcing everything into display type.",
-    utilityFont: "Share Tech Mono",
-  },
-  {
-    bodyFont: "Inter",
-    category: "Neon / retro / synthwave",
-    displayFont: "VT323",
-    label: "VT323 + Inter + JetBrains Mono",
-    note: "Retro voice up front, with Inter carrying readability and mono handling data readouts.",
-    utilityFont: "JetBrains Mono",
-  },
-  {
-    bodyFont: "Inter",
-    category: "Neon / retro / synthwave",
-    displayFont: "Press Start 2P",
-    label: "Press Start 2P + Inter + JetBrains Mono",
-    note: "Game-like nostalgia in small doses, backed by practical UI and utility fonts.",
-    utilityFont: "JetBrains Mono",
-  },
-  {
-    bodyFont: "Space Grotesk",
-    category: "Neon / retro / synthwave",
-    displayFont: "Major Mono Display",
-    label: "Major Mono Display + Space Mono + Space Grotesk",
-    note: "Mono-forward display tone with a real body sans for readable screens.",
-    utilityFont: "Space Mono",
-  },
-  {
-    bodyFont: "Inter",
-    category: "Neon / retro / synthwave",
-    displayFont: "Chakra Petch",
-    label: "Chakra Petch + Inter + JetBrains Mono",
-    note: "Cyberpunk dashboard flavor with dependable body and data handling.",
-    utilityFont: "JetBrains Mono",
-  },
-  {
-    bodyFont: "Inter",
-    category: "Warm / approachable",
-    displayFont: "Bricolage Grotesque",
-    label: "Bricolage Grotesque + Inter + Fraunces",
-    note: "Friendly brand voice, safe body text, and a softer serif accent.",
-    utilityFont: "Fraunces",
-  },
-  {
-    bodyFont: "Plus Jakarta Sans",
-    category: "Warm / approachable",
-    displayFont: "Lora",
-    label: "Plus Jakarta Sans + Lora + Caveat",
-    note: "Warm client-facing system with a handwritten accent for testimonials or signatures.",
-    utilityFont: "Caveat",
-  },
-  {
-    bodyFont: "Inter",
-    category: "Warm / approachable",
-    displayFont: "Outfit",
-    label: "Outfit + Inter + Lora",
-    note: "Rounded approachable headlines, practical UI body, and a warmer serif accent.",
-    utilityFont: "Lora",
-  },
-  {
-    bodyFont: "Inter",
-    category: "Warm / approachable",
-    displayFont: "Recoleta",
-    label: "Recoleta + Inter + JetBrains Mono",
-    note: "Soft brand personality with technical/code support when the product needs it.",
-    utilityFont: "JetBrains Mono",
-  },
-  {
-    bodyFont: "Neue Haas Grotesk",
-    category: "Bold editorial / brutalist",
-    displayFont: "Migra",
-    label: "Migra + Neue Haas Grotesk + Berkeley Mono",
-    note: "Premium brutalist tone with a serious body sans and spec-sheet mono contrast.",
-    utilityFont: "Berkeley Mono",
-  },
-  {
-    bodyFont: "Neue Haas Grotesk",
-    category: "Bold editorial / brutalist",
-    displayFont: "PP Editorial New",
-    label: "PP Editorial New + Neue Haas Grotesk + Berkeley Mono",
-    note: "High-taste editorial direction with restrained UI text and sharp metadata.",
-    utilityFont: "Berkeley Mono",
-  },
-  {
-    bodyFont: "Sohne",
-    category: "Bold editorial / brutalist",
-    displayFont: "Reckless",
-    label: "Reckless + Sohne + Sohne Mono",
-    note: "Bold editorial display with a cohesive product body and mono companion.",
-    utilityFont: "Sohne Mono",
-  },
-  {
-    bodyFont: "Inter",
-    category: "Bold editorial / brutalist",
-    displayFont: "Boogy Brown",
-    label: "Boogy Brown + Inter + JetBrains Mono",
-    note: "Loud editorial voice, stable body text, and practical technical contrast.",
-    utilityFont: "JetBrains Mono",
-  },
-];
-
-const fontPresetCategories = [
-  ...new Set(fontPresets.map((preset) => preset.category)),
-];
-
-const displayFontOptions = uniqueOptions([
-  "Instrument Serif",
-  "Fraunces",
-  "Newsreader",
-  "Space Grotesk",
-  "Sora",
-  "Cabinet Grotesk",
-  "IBM Plex Serif",
-  "DM Serif Display",
-  "Tiempos Headline",
-  "Monoton",
-  "Audiowide",
-  "Orbitron",
-  "VT323",
-  "Press Start 2P",
-  "Major Mono Display",
-  "Chakra Petch",
-  "Bricolage Grotesque",
-  "Lora",
-  "Outfit",
-  "Recoleta",
-  "Migra",
-  "PP Editorial New",
-  "Reckless",
-  "Boogy Brown",
-  ...fontPresets.map((preset) => preset.displayFont),
-]);
-
-const bodyFontOptions = uniqueOptions([
-  "Inter",
-  "Geist",
-  "General Sans",
-  "Sohne",
-  "Untitled Sans",
-  "Neue Haas Grotesk",
-  "Space Grotesk",
-  "Rajdhani",
-  "Chakra Petch",
-  "Plus Jakarta Sans",
-  "Outfit",
-  "Source Sans 3",
-  "Manrope",
-  "DM Sans",
-  "IBM Plex Sans",
-  ...fontPresets.map((preset) => preset.bodyFont),
-]);
-
-const utilityFontOptions = uniqueOptions([
-  "JetBrains Mono",
-  "Geist Mono",
-  "IBM Plex Mono",
-  "DM Mono",
-  "Berkeley Mono",
-  "Space Mono",
-  "Share Tech Mono",
-  "Roboto Mono",
-  "Sohne Mono",
-  "Instrument Serif",
-  "Fraunces",
-  "Lora",
-  "Caveat",
-  "Merriweather",
-  "Newsreader Italic",
-  ...fontPresets.map((preset) => preset.utilityFont),
-]);
-const allFontOptions = uniqueOptions([
-  ...displayFontOptions,
-  ...bodyFontOptions,
-  ...utilityFontOptions,
-]);
-
 interface BriefFormState {
   accentColor: string;
   appCategory: string;
   appName: string;
   audience: string;
-  bodyFont: string;
   brandNotes: string;
   desiredMood: string;
   dislikedColors: string;
-  displayFont: string;
-  fontPreferences: string;
-  fontPreset: string;
   likedColors: string;
   name: string;
   primaryColor: string;
   referenceLinks: string;
   useAccentColor: boolean;
   usePrimaryColor: boolean;
-  utilityFont: string;
   visualDislikes: string;
   effectPreference: string;
 }
@@ -332,7 +61,6 @@ type TextFieldName = Exclude<
   "useAccentColor" | "usePrimaryColor"
 >;
 
-type FontRoleName = "bodyFont" | "displayFont" | "utilityFont";
 type FormStep = "palette" | "brief";
 type TextInputElement =
   | HTMLInputElement
@@ -344,20 +72,15 @@ const initialBriefFormState: BriefFormState = {
   appCategory: "",
   appName: "",
   audience: "",
-  bodyFont: fontPresets[0]?.bodyFont ?? "Inter",
   brandNotes: "",
   desiredMood: "",
   dislikedColors: "",
-  displayFont: fontPresets[0]?.displayFont ?? "Instrument Serif",
-  fontPreferences: "",
-  fontPreset: fontPresets[0]?.label ?? "",
   likedColors: "",
   name: "",
   primaryColor: "#0ea5e9",
   referenceLinks: "",
-  useAccentColor: true,
-  usePrimaryColor: true,
-  utilityFont: fontPresets[0]?.utilityFont ?? "JetBrains Mono",
+  useAccentColor: false,
+  usePrimaryColor: false,
   visualDislikes: "",
   effectPreference: "auto",
 };
@@ -372,9 +95,9 @@ export function BriefForm() {
       previewProjectReferenceAnalysis,
       initialReferencePreviewState,
     );
-  const selectedPreset = fontPresets.find(
-    (preset) => preset.label === form.fontPreset,
-  );
+  const [, startPaletteTransition] = useTransition();
+  const [, startReferenceTransition] = useTransition();
+  const referenceLinks = splitEntryList(form.referenceLinks);
   const currentPaletteSignature = paletteInputSignature({
     appCategory: form.appCategory,
     appName: form.appName,
@@ -408,16 +131,6 @@ export function BriefForm() {
     };
   }
 
-  function updateFontRole(field: FontRoleName) {
-    return (event: ChangeEvent<HTMLSelectElement>) => {
-      setForm((current) => ({
-        ...current,
-        [field]: event.target.value,
-        fontPreset: "",
-      }));
-    };
-  }
-
   function updateCheckbox(field: "useAccentColor" | "usePrimaryColor") {
     return (event: ChangeEvent<HTMLInputElement>) => {
       setForm((current) => ({
@@ -427,22 +140,24 @@ export function BriefForm() {
     };
   }
 
-  function updateFontPreset(event: ChangeEvent<HTMLSelectElement>) {
-    const preset = fontPresets.find(
-      (item) => item.label === event.target.value,
-    );
+  function generatePalettePreview() {
+    startPaletteTransition(() => {
+      generatePaletteAction(formDataFromState(form));
+    });
+  }
 
-    if (!preset) {
-      setForm((current) => ({ ...current, fontPreset: "" }));
-      return;
-    }
+  function analyzeReferencePreview() {
+    startReferenceTransition(() => {
+      analyzeReferencesAction(formDataFromState(form));
+    });
+  }
 
+  function removeReferenceLink(indexToRemove: number) {
     setForm((current) => ({
       ...current,
-      bodyFont: preset.bodyFont,
-      displayFont: preset.displayFont,
-      fontPreset: preset.label,
-      utilityFont: preset.utilityFont,
+      referenceLinks: splitEntryList(current.referenceLinks)
+        .filter((_, index) => index !== indexToRemove)
+        .join("\n"),
     }));
   }
 
@@ -542,59 +257,75 @@ export function BriefForm() {
               placeholder="Black, electric blue, cool gray"
             />
             <p className={helpClassName}>
-              Broad color taste goes here. Exact anchors below control the final
-              token palette.
+              Use this for broad color taste and palette mood. The AI uses
+              these as guidance when generating the token palette and image
+              direction, but exact anchors below carry more weight. Leave this
+              blank if you want the AI to choose colors from the app category,
+              audience, and mood.
             </p>
           </Field>
 
-          <div className="grid gap-5 rounded-md border border-zinc-800 bg-zinc-950/40 p-4 sm:grid-cols-2">
-            <Field label="Exact primary color" htmlFor="primaryColor">
-              <div className="grid grid-cols-[64px_1fr] gap-3">
-                <input
-                  id="primaryColor"
-                  name="primaryColor"
-                  type="color"
-                  className={colorClassName}
-                  value={form.primaryColor}
-                  onChange={updateTextField("primaryColor")}
-                />
-                <label className="flex items-center gap-2 rounded-md border border-zinc-800 bg-zinc-950 px-3 text-sm text-zinc-300">
-                  <input
-                    type="checkbox"
-                    name="usePrimaryColor"
-                    value="1"
-                    className={checkboxClassName}
-                    checked={form.usePrimaryColor}
-                    onChange={updateCheckbox("usePrimaryColor")}
-                  />
-                  Use this primary
-                </label>
-              </div>
-            </Field>
+          <div className="space-y-3">
+            <div>
+              <p className="text-sm font-medium text-zinc-200">
+                Exact color anchors
+              </p>
+              <p className={helpClassName}>
+                Checked anchors act as strong AI constraints. They pin the
+                approved primary and accent tokens first, then generated images
+                follow that approved palette as the color contract.
+              </p>
+            </div>
 
-            <Field label="Exact accent color" htmlFor="accentColor">
-              <div className="grid grid-cols-[64px_1fr] gap-3">
-                <input
-                  id="accentColor"
-                  name="accentColor"
-                  type="color"
-                  className={colorClassName}
-                  value={form.accentColor}
-                  onChange={updateTextField("accentColor")}
-                />
-                <label className="flex items-center gap-2 rounded-md border border-zinc-800 bg-zinc-950 px-3 text-sm text-zinc-300">
+            <div className="grid gap-5 rounded-md border border-zinc-800 bg-zinc-950/40 p-4 sm:grid-cols-2">
+              <Field label="Exact primary color" htmlFor="primaryColor">
+                <div className="grid grid-cols-[64px_1fr] gap-3">
                   <input
-                    type="checkbox"
-                    name="useAccentColor"
-                    value="1"
-                    className={checkboxClassName}
-                    checked={form.useAccentColor}
-                    onChange={updateCheckbox("useAccentColor")}
+                    id="primaryColor"
+                    name="primaryColor"
+                    type="color"
+                    className={colorClassName}
+                    value={form.primaryColor}
+                    onChange={updateTextField("primaryColor")}
                   />
-                  Use this accent
-                </label>
-              </div>
-            </Field>
+                  <label className="flex items-center gap-2 rounded-md border border-zinc-800 bg-zinc-950 px-3 text-sm text-zinc-300">
+                    <input
+                      type="checkbox"
+                      name="usePrimaryColor"
+                      value="1"
+                      className={checkboxClassName}
+                      checked={form.usePrimaryColor}
+                      onChange={updateCheckbox("usePrimaryColor")}
+                    />
+                    Use this primary
+                  </label>
+                </div>
+              </Field>
+
+              <Field label="Exact accent color" htmlFor="accentColor">
+                <div className="grid grid-cols-[64px_1fr] gap-3">
+                  <input
+                    id="accentColor"
+                    name="accentColor"
+                    type="color"
+                    className={colorClassName}
+                    value={form.accentColor}
+                    onChange={updateTextField("accentColor")}
+                  />
+                  <label className="flex items-center gap-2 rounded-md border border-zinc-800 bg-zinc-950 px-3 text-sm text-zinc-300">
+                    <input
+                      type="checkbox"
+                      name="useAccentColor"
+                      value="1"
+                      className={checkboxClassName}
+                      checked={form.useAccentColor}
+                      onChange={updateCheckbox("useAccentColor")}
+                    />
+                    Use this accent
+                  </label>
+                </div>
+              </Field>
+            </div>
           </div>
 
           <Field label="Visual effects" htmlFor="effectPreference">
@@ -617,7 +348,7 @@ export function BriefForm() {
               </option>
             </select>
             <p className={helpClassName}>
-              Effect tokens are only for generated backgrounds, source screens,
+              Effect tokens are only for generated backgrounds, source plates,
               hero images, and atmosphere.
             </p>
           </Field>
@@ -642,11 +373,11 @@ export function BriefForm() {
           <PaletteGenerationControls
             canGeneratePalette={canGeneratePalette}
             errorMessage={palettePreview.errorMessage}
-            formAction={generatePaletteAction}
             hasGeneratedPalette={Boolean(generatedPalette)}
             hasStalePalette={hasStalePalette}
             isGeneratingPalette={isGeneratingPalette}
             onContinue={() => setStep("brief")}
+            onGenerate={generatePalettePreview}
           />
 
           <PaletteUsageExamples />
@@ -661,14 +392,6 @@ export function BriefForm() {
 
       <div hidden={step !== "brief"}>
         <section className="grid gap-6">
-          <FontSystemFields
-            form={form}
-            onFontPresetChange={updateFontPreset}
-            onFontRoleChange={updateFontRole}
-            onTextFieldChange={updateTextField}
-            selectedPreset={selectedPreset}
-          />
-
           <Field label="Reference links" htmlFor="referenceLinks">
             <textarea
               id="referenceLinks"
@@ -684,15 +407,18 @@ export function BriefForm() {
                 https://.
               </p>
               <button
-                type="submit"
-                formAction={analyzeReferencesAction}
-                formNoValidate
+                type="button"
                 className="inline-flex items-center justify-center rounded-md border border-zinc-700 px-3.5 py-2 text-sm font-semibold text-zinc-100 transition hover:border-zinc-500 hover:bg-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-500 disabled:cursor-not-allowed disabled:opacity-60"
                 disabled={isAnalyzingReferences}
+                onClick={analyzeReferencePreview}
               >
                 {isAnalyzingReferences ? "Analyzing..." : "Analyze references"}
               </button>
             </div>
+            <ReferenceLinkList
+              links={referenceLinks}
+              onRemove={removeReferenceLink}
+            />
             <ReferencePreviewPanel state={referencePreview} />
           </Field>
 
@@ -741,7 +467,7 @@ export function BriefForm() {
 
 function StepHeader({ step }: { step: FormStep }) {
   return (
-    <div className="grid gap-3 border-b border-zinc-800 pb-5 sm:grid-cols-2">
+    <div className="grid gap-3 border-b border-zinc-800 pb-5 lg:grid-cols-2">
       <div
         className={`rounded-md border p-4 ${
           step === "palette"
@@ -771,10 +497,10 @@ function StepHeader({ step }: { step: FormStep }) {
           Step 2
         </p>
         <h2 className="mt-1 text-base font-semibold text-zinc-50">
-          Complete brief
+          Background brief
         </h2>
         <p className="mt-2 text-sm leading-6 text-zinc-400">
-          Add typography, audience, references, and generation constraints.
+          Add references and constraints for the generated source backgrounds.
         </p>
       </div>
     </div>
@@ -794,8 +520,8 @@ function PalettePreview({ palette }: { palette: PaletteSystem }) {
         </p>
       </div>
       <div className="mt-5 grid gap-4 xl:grid-cols-2">
-        <PaletteModePreview mode={palette.light} />
-        <PaletteModePreview mode={palette.dark} />
+        <PaletteModePreview label="Light" mode={palette.light} />
+        <PaletteModePreview label="Dark" mode={palette.dark} />
       </div>
     </section>
   );
@@ -804,19 +530,19 @@ function PalettePreview({ palette }: { palette: PaletteSystem }) {
 function PaletteGenerationControls({
   canGeneratePalette,
   errorMessage,
-  formAction,
   hasGeneratedPalette,
   hasStalePalette,
   isGeneratingPalette,
   onContinue,
+  onGenerate,
 }: {
   canGeneratePalette: boolean;
   errorMessage?: string;
-  formAction: (payload: FormData) => void;
   hasGeneratedPalette: boolean;
   hasStalePalette: boolean;
   isGeneratingPalette: boolean;
   onContinue: () => void;
+  onGenerate: () => void;
 }) {
   return (
     <section className="rounded-md border border-zinc-800 bg-zinc-950/50 p-4">
@@ -847,11 +573,10 @@ function PaletteGenerationControls({
         </div>
         <div className="flex shrink-0 flex-col gap-3 sm:items-end">
           <button
-            type="submit"
-            formAction={formAction}
-            formNoValidate
+            type="button"
             className="inline-flex items-center justify-center rounded-md bg-zinc-50 px-4 py-2.5 text-sm font-semibold text-zinc-950 transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-zinc-300 focus:ring-offset-2 focus:ring-offset-zinc-950 disabled:cursor-not-allowed disabled:opacity-50"
             disabled={!canGeneratePalette || isGeneratingPalette}
+            onClick={onGenerate}
           >
             {isGeneratingPalette
               ? "Generating..."
@@ -907,9 +632,9 @@ function PaletteUsageExamples() {
       </div>
       <div className="mt-4 grid gap-3">
         <TokenExplainerAccordion
-          alt="Mobile app base, typography, and border token usage explainer"
+          alt="Mobile app base, text, and border token usage explainer"
           src="/mobile-app-explained-1.png"
-          title="Screen 1 - Base, Typography & Borders"
+          title="Screen 1 - Base, Text & Borders"
         />
         <TokenExplainerAccordion
           alt="Mobile app primary and semantic status token usage explainer"
@@ -953,10 +678,23 @@ function TokenExplainerAccordion({
   );
 }
 
-function PaletteModePreview({ mode }: { mode: PaletteModeSpec }) {
+function PaletteModePreview({
+  label,
+  mode,
+}: {
+  label: "Dark" | "Light";
+  mode: PaletteModeSpec;
+}) {
+  const primary = findPaletteToken(mode, "primary") ?? mode.background;
+
   return (
     <div className="rounded-md border border-zinc-800 bg-zinc-900/80 p-4">
-      <h3 className="text-sm font-semibold text-zinc-100">{mode.title}</h3>
+      <div>
+        <h3 className="text-sm font-semibold text-zinc-100">{label}</h3>
+        <p className="mt-1 text-xs leading-5 text-zinc-500">
+          Primary {primary}
+        </p>
+      </div>
       <div className="mt-4 space-y-4">
         {mode.groups.map((group) => (
           <div key={group.name}>
@@ -989,161 +727,35 @@ function PaletteModePreview({ mode }: { mode: PaletteModeSpec }) {
   );
 }
 
-function FontSystemFields({
-  form,
-  onFontPresetChange,
-  onFontRoleChange,
-  onTextFieldChange,
-  selectedPreset,
+function ReferenceLinkList({
+  links,
+  onRemove,
 }: {
-  form: BriefFormState;
-  onFontPresetChange: (event: ChangeEvent<HTMLSelectElement>) => void;
-  onFontRoleChange: (
-    field: FontRoleName,
-  ) => (event: ChangeEvent<HTMLSelectElement>) => void;
-  onTextFieldChange: (
-    field: TextFieldName,
-  ) => (event: ChangeEvent<TextInputElement>) => void;
-  selectedPreset?: FontPreset;
+  links: string[];
+  onRemove: (index: number) => void;
 }) {
+  if (links.length === 0) {
+    return null;
+  }
+
   return (
-    <section className="grid gap-4 border-y border-zinc-800 py-5">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h2 className="text-lg font-semibold text-zinc-50">Font system</h2>
-          <p className="mt-1 max-w-2xl text-sm leading-6 text-zinc-400">
-            Pick one font for voice, one for daily UI work, and one specialist
-            accent.
-          </p>
-        </div>
-        <details className="max-w-2xl text-sm text-zinc-400">
-          <summary className="cursor-pointer select-none text-sm font-semibold text-zinc-200">
-            How the three roles work
-          </summary>
-          <div className="mt-3 space-y-3 leading-6">
-            <p>
-              Display carries the first impression: large titles, hero moments,
-              logos, or pull quotes.
-            </p>
-            <p>
-              Body does most of the labor: paragraphs, labels, buttons, forms,
-              and dense interface text.
-            </p>
-            <p>
-              Utility adds a specialist register for data, timestamps, IDs,
-              technical metadata, quotes, or signature moments.
-            </p>
-            <p>
-              A solid starting ratio is 5% display, 80% body, and 15% utility
-              or accent.
-            </p>
-          </div>
-        </details>
-      </div>
-
-      <Field label="Suggested pairing" htmlFor="fontPreset">
-        <select
-          id="fontPreset"
-          name="fontPreset"
-          className={fieldClassName}
-          value={form.fontPreset}
-          onChange={onFontPresetChange}
+    <div className="mt-3 flex flex-wrap gap-2">
+      {links.map((link, index) => (
+        <span
+          key={`${link}-${index}`}
+          className="inline-flex max-w-full items-center gap-2 rounded-md border border-zinc-800 bg-zinc-950 px-2.5 py-1.5 text-xs text-zinc-300"
         >
-          <option value="">Custom role selection</option>
-          {fontPresetCategories.map((category) => (
-            <optgroup key={category} label={category}>
-              {fontPresets
-                .filter((preset) => preset.category === category)
-                .map((preset) => (
-                  <option key={preset.label} value={preset.label}>
-                    {preset.label}
-                  </option>
-                ))}
-            </optgroup>
-          ))}
-        </select>
-        {selectedPreset ? (
-          <p className={helpClassName}>{selectedPreset.note}</p>
-        ) : (
-          <p className={helpClassName}>
-            Choose a preset to fill the three roles, or tune each role manually.
-          </p>
-        )}
-      </Field>
-
-      <div className="grid gap-5 lg:grid-cols-3">
-        <Field label="Display / voice" htmlFor="displayFont" required>
-          <select
-            id="displayFont"
-            name="displayFont"
-            required
-            className={fieldClassName}
-            value={form.displayFont}
-            onChange={onFontRoleChange("displayFont")}
+          <span className="max-w-72 truncate">{link}</span>
+          <button
+            type="button"
+            className="rounded border border-zinc-700 px-1.5 text-zinc-400 transition hover:border-zinc-500 hover:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-500"
+            onClick={() => onRemove(index)}
           >
-            {allFontOptions.map((font) => (
-              <option key={font} value={font}>
-                {font}
-              </option>
-            ))}
-          </select>
-          <p className={helpClassName}>
-            Brand-first headlines, large moments, and personality.
-          </p>
-        </Field>
-
-        <Field label="Body / workhorse" htmlFor="bodyFont" required>
-          <select
-            id="bodyFont"
-            name="bodyFont"
-            required
-            className={fieldClassName}
-            value={form.bodyFont}
-            onChange={onFontRoleChange("bodyFont")}
-          >
-            {allFontOptions.map((font) => (
-              <option key={font} value={font}>
-                {font}
-              </option>
-            ))}
-          </select>
-          <p className={helpClassName}>
-            Paragraphs, labels, navigation, buttons, and form fields.
-          </p>
-        </Field>
-
-        <Field label="Utility / accent" htmlFor="utilityFont" required>
-          <select
-            id="utilityFont"
-            name="utilityFont"
-            required
-            className={fieldClassName}
-            value={form.utilityFont}
-            onChange={onFontRoleChange("utilityFont")}
-          >
-            {allFontOptions.map((font) => (
-              <option key={font} value={font}>
-                {font}
-              </option>
-            ))}
-          </select>
-          <p className={helpClassName}>
-            Data, timestamps, IDs, pull quotes, or occasional accent text.
-          </p>
-        </Field>
-      </div>
-
-      <Field label="Additional font notes" htmlFor="fontPreferences">
-        <textarea
-          id="fontPreferences"
-          name="fontPreferences"
-          className={`${fieldClassName} min-h-24 resize-y`}
-          value={form.fontPreferences}
-          onChange={onTextFieldChange("fontPreferences")}
-          placeholder="Client likes rounded letters, dislikes condensed type, needs tabular numbers."
-        />
-      </Field>
-    </section>
+            Remove
+          </button>
+        </span>
+      ))}
+    </div>
   );
 }
 
@@ -1188,18 +800,39 @@ function ReferencePreviewPanel({ state }: { state: ReferencePreviewState }) {
   );
 }
 
-function uniqueOptions(values: string[]) {
-  return [...new Set(values.filter(Boolean))].sort((a, b) =>
-    a.localeCompare(b),
-  );
-}
-
 function likedColorsForPalette(form: BriefFormState) {
   return [
     ...splitEntryList(form.likedColors),
     form.usePrimaryColor ? `Primary anchor ${form.primaryColor}` : "",
     form.useAccentColor ? `Accent anchor ${form.accentColor}` : "",
   ].filter(Boolean);
+}
+
+function formDataFromState(form: BriefFormState) {
+  const formData = new FormData();
+
+  Object.entries(form).forEach(([key, value]) => {
+    if (typeof value === "boolean") {
+      formData.set(key, value ? "1" : "");
+      return;
+    }
+
+    formData.set(key, value);
+  });
+
+  return formData;
+}
+
+function findPaletteToken(mode: PaletteModeSpec, tokenName: string) {
+  for (const group of mode.groups) {
+    const token = group.tokens.find((item) => item.name === tokenName);
+
+    if (token) {
+      return token.value;
+    }
+  }
+
+  return null;
 }
 
 function splitEntryList(value: string) {

@@ -40,6 +40,23 @@ describe("palette system", () => {
     expect(runtime.text).toMatch(/^#[0-9a-f]{6}$/);
   });
 
+  it("infers palette anchors from audience and category when no colors are provided", () => {
+    const palette = buildPaletteSystem({
+      appCategory: "Fitness",
+      appName: "FitTalk",
+      audience: "busy trainers and health coaches",
+      desiredMood: "clear, energetic, focused",
+      dislikedColors: [],
+      likedColors: [],
+    });
+
+    expect(palette.source.primary).toBe("#0f766e");
+    expect(palette.source.accent).toBe("#84cc16");
+    expect(palette.source.rationale?.join(" ")).toContain(
+      "No liked colors were provided",
+    );
+  });
+
   it("adds effect tokens when the client asks for expressive glow", () => {
     const palette = buildPaletteSystem({
       appCategory: "Music",

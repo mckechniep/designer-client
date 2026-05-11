@@ -172,7 +172,7 @@ function responsesImagePrompt(request: ImageGenerationRequest) {
   if (request.responsesAction === "generate") {
     return [
       `Use the previous response as design-system context, then draw a new separate ${request.targetLabel ?? "mobile app visual asset"} image.`,
-      "Do not edit or duplicate the previous image. Keep palette, contrast, typography mood, app category fit, and visual language consistent with that context.",
+      "Do not edit or duplicate the previous image. Keep palette, contrast, app category fit, material mood, and visual language consistent with that context.",
       "Return one finished static image for this specific asset family.",
       "",
       request.prompt,

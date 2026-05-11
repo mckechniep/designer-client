@@ -429,8 +429,6 @@ export async function createAssetPackage(
       packagePalettes.dark,
       options.paletteSystem?.dark,
     ),
-    await createButtonSheet("light", options, packagePalettes.light),
-    await createButtonSheet("dark", options, packagePalettes.dark),
     await createThumbnail(master),
   ];
   const manifest = {

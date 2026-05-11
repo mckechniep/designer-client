@@ -17,7 +17,14 @@ export class MockImageProvider implements ImageGenerationProvider {
     const variant = createPromptVariant(
       `${request.kind ?? "master_background"} ${request.prompt}`,
     );
+    const kind = request.kind ?? "master_background";
     const title = request.targetLabel ?? formatKind(request.kind ?? "asset");
+    const mockText = shouldShowMockText(kind)
+      ? `
+        <text x="160" y="340" fill="${variant.accent}" font-size="54" font-family="Arial" font-weight="800">${escapeSvg(title)}</text>
+        <text x="160" y="430" fill="#f8fafc" font-size="34" font-family="Arial">Mock generated asset ${variant.label}</text>
+      `
+      : "";
     const svg = `
       <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
         <defs>
@@ -35,15 +42,14 @@ export class MockImageProvider implements ImageGenerationProvider {
         <circle cx="${variant.circleX}" cy="${variant.circleY}" r="${variant.radius}" fill="url(#glow)"/>
         <path d="${variant.wavePath}" fill="${variant.shadow}" fill-opacity="0.56"/>
         <rect x="116" y="236" width="1208" height="1780" rx="72" fill="${variant.surface}" fill-opacity="0.38" stroke="${variant.accent}" stroke-opacity="0.36" stroke-width="6"/>
-        <text x="160" y="340" fill="${variant.accent}" font-size="54" font-family="Arial" font-weight="800">${escapeSvg(title)}</text>
-        <text x="160" y="430" fill="#f8fafc" font-size="34" font-family="Arial">Mock generated asset ${variant.label}</text>
+        ${mockText}
       </svg>
     `;
 
     const bytes = await renderSvgToPng({ height, svg, width });
 
     return {
-      kind: request.kind ?? "master_background",
+      kind,
       fileName: request.fileName ?? "master-background.png",
       mimeType: "image/png",
       providerMetadata: {
@@ -70,6 +76,17 @@ export class MockImageProvider implements ImageGenerationProvider {
       targetLabel: "Master background",
     });
   }
+}
+
+function shouldShowMockText(kind: string) {
+  return ![
+    "app_image",
+    "background_plate_dark",
+    "background_plate_light",
+    "master_background",
+    "screen_plain_dark",
+    "screen_plain_light",
+  ].includes(kind);
 }
 
 function createPromptVariant(prompt: string) {

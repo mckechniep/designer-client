@@ -66,15 +66,16 @@ export function generationStatusPresentation({
 
   if (latestStatus === "running") {
     return {
-      body: "The image model is generating the master asset and related package images. This can take 10-20 minutes.",
-      title: "Generating package",
+      body:
+        "The image model is generating the light and dark source background plates. This can take 10-20 minutes.",
+      title: "Generating background package",
       tone: "running",
     };
   }
 
   if (latestStatus === "succeeded") {
     return {
-      body: `Package finished and saved with ${fileCount} file${fileCount === 1 ? "" : "s"}.`,
+      body: `Background package finished and saved with ${fileCount} file${fileCount === 1 ? "" : "s"}.`,
       title: "Generation complete",
       tone: "succeeded",
     };

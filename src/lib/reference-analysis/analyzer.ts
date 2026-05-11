@@ -118,7 +118,8 @@ export async function analyzeReferenceUrls(
       analysis,
       sourceUrls,
       status: "skipped",
-      summary: summarizeReferenceAnalysis(analysis),
+      summary:
+        "No reference websites were supplied. Use the saved brief, approved palette system, selected design direction, font system, visual dislikes, and brand notes as the style contract.",
     };
   }
 
@@ -139,7 +140,8 @@ export async function analyzeReferenceUrls(
       errorMessage: "No reference URLs could be fetched.",
       sourceUrls,
       status: "failed",
-      summary: summarizeReferenceAnalysis(analysis),
+      summary:
+        "Reference websites were supplied, but none could be fetched. Do not infer style from those URLs; use the saved brief, approved palette system, selected design direction, font system, visual dislikes, and brand notes as the style contract.",
     };
   }
 
@@ -219,7 +221,8 @@ export async function analyzeReferenceUrls(
         {
           fit: "medium",
           name: "mobile_asset_system",
-          reason: "The downstream target is app screen and asset generation.",
+          reason:
+            "The downstream target is app background and asset generation.",
         },
       ],
       motionArchetypeCandidates: [

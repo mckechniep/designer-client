@@ -1,12 +1,8 @@
 import { describe, expect, it } from "vitest";
 import JSZip from "jszip";
-import {
-  createAssetPackage,
-  createButtonSheetSvg,
-} from "@/lib/generation/derivatives";
+import { createAssetPackage } from "@/lib/generation/derivatives";
 import { MockImageProvider } from "@/lib/generation/mock-provider";
 import sharp, { renderSvgToPng } from "@/lib/generation/svg-renderer";
-import { buildPaletteSystem, paletteModeToAssetPalette } from "@/lib/palette/spec";
 
 describe("asset package generation", () => {
   it("varies mock master assets when prompts change", async () => {
@@ -46,11 +42,6 @@ describe("asset package generation", () => {
       ),
     ).toBe(false);
     expect(
-      findFile(calmPackage, "buttons_dark").bytes.equals(
-        findFile(brightPackage, "buttons_dark").bytes,
-      ),
-    ).toBe(false);
-    expect(
       findFile(calmPackage, "screen_plain_dark").bytes.equals(
         findFile(brightPackage, "screen_plain_dark").bytes,
       ),
@@ -74,8 +65,6 @@ describe("asset package generation", () => {
     );
 
     expect([...filesByKind.keys()].sort()).toEqual([
-      "buttons_dark",
-      "buttons_light",
       "master_background",
       "palette_dark",
       "palette_light",
@@ -89,12 +78,6 @@ describe("asset package generation", () => {
     expect(filesByKind.get("palette_dark")?.fileName).toBe(
       "laitly-dark-palette.png",
     );
-    expect(filesByKind.get("buttons_light")?.fileName).toBe(
-      "buttons-light-all-v1.png",
-    );
-    expect(filesByKind.get("buttons_dark")?.fileName).toBe(
-      "buttons-dark-all-v1.png",
-    );
     expect(filesByKind.get("screen_plain_light")?.fileName).toBe(
       "light-screen.png",
     );
@@ -106,10 +89,8 @@ describe("asset package generation", () => {
       fileName: "laitly-asset-package-v1.zip",
       mimeType: "application/zip",
     });
-    expect(
-      assetPackage.manifest.files.find((file) => file.kind === "buttons_dark")
-        ?.path,
-    ).toBe("mobile-assets/buttons-dark-all-v1.png");
+    expect(filesByKind.has("buttons_dark")).toBe(false);
+    expect(filesByKind.has("buttons_light")).toBe(false);
 
     expect(assetPackage.manifest.files).toHaveLength(assetPackage.files.length);
     expect(
@@ -128,18 +109,10 @@ describe("asset package generation", () => {
     const lightScreen = assetPackage.files.find(
       (file) => file.kind === "screen_plain_light",
     );
-    const buttons = assetPackage.files.find(
-      (file) => file.kind === "buttons_dark",
-    );
 
     expect(lightScreen).toMatchObject({
       width: 1440,
       height: 2560,
-      mimeType: "image/png",
-    });
-    expect(buttons).toMatchObject({
-      width: 2400,
-      height: 1600,
       mimeType: "image/png",
     });
     await expect(sharp(lightScreen?.bytes).metadata()).resolves.toMatchObject({
@@ -160,7 +133,7 @@ describe("asset package generation", () => {
       aspect: "portrait",
       fileName: "dark-screen-v3.png",
       kind: "screen_plain_dark",
-      prompt: "Create a dark screen from the source screen.",
+      prompt: "Create a dark source background from the light source background.",
       quality: "final",
       targetLabel: "dark screen",
     });
@@ -189,29 +162,6 @@ describe("asset package generation", () => {
         (file) => file.kind === "icon_set_showcase",
       )?.path,
     ).toBe("mobile-assets/app-icon-set-v3.png");
-  });
-
-  it("renders button sheets from approved palette states and selected fonts", async () => {
-    const palette = buildPaletteSystem({
-      appName: "Laitly",
-      dislikedColors: [],
-      likedColors: ["Primary anchor #e8c86a", "Accent anchor #b97862"],
-    });
-    const runtimePalette = paletteModeToAssetPalette(palette.light);
-    const svg = createButtonSheetSvg("light", {
-      fontPreferences:
-        "Display / Voice font: Instrument Serif. Body / Workhorse font: Inter. Utility / Accent font: JetBrains Mono.",
-      palette: runtimePalette,
-      version: "v7",
-    });
-
-    expect(svg).toContain("Inter");
-    expect(svg).toContain("Instrument Serif");
-    expect(svg).toContain(runtimePalette.primary);
-    expect(svg).toContain(runtimePalette.primaryHover);
-    expect(svg).toContain(runtimePalette.primaryPressed);
-    expect(svg).not.toContain("font-family=\"Arial\"");
-    expect(svg).not.toContain("#075965");
   });
 
   it("renders supported bundled font families in generated SVG PNG output", async () => {
@@ -250,7 +200,7 @@ describe("asset package generation", () => {
     expect(zip.file("README.md")).not.toBeNull();
     expect(zip.file("laitly-dark-palette.png")).not.toBeNull();
     expect(zip.file("mobile-assets/master-background.webp")).not.toBeNull();
-    expect(zip.file("mobile-assets/buttons-dark-all-v1.png")).not.toBeNull();
+    expect(zip.file("mobile-assets/buttons-dark-all-v1.png")).toBeNull();
     expect(zip.file("mobile-assets/dark-screen.png")).not.toBeNull();
     expect(zip.file("mobile-assets/splash-v1.png")).toBeNull();
     expect(zip.file("mobile-assets/light-screen-examples-v1.png")).toBeNull();
@@ -279,10 +229,8 @@ describe("asset package generation", () => {
     });
 
     expect(
-      assetPackage.files.find((file) => file.kind === "buttons_dark"),
-    ).toMatchObject({
-      fileName: "buttons-dark-all-v2.png",
-    });
+      assetPackage.files.some((file) => file.kind === "buttons_dark"),
+    ).toBe(false);
     expect(assetPackage.downloadPackage.fileName).toBe(
       "laitly-asset-package-v2.zip",
     );

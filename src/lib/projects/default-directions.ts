@@ -37,17 +37,17 @@ export function defaultDesignDirectionRows({
       summary: `A richer visual direction for ${appName}, using depth, glow, and layered composition while preserving overlay readability.`,
       theme_notes: {
         tone: "immersive, premium, dimensional",
-        assetUse: ["source screens", "onboarding", "hero crops"],
+        assetUse: ["source backgrounds", "onboarding", "hero crops"],
       },
       is_selected: false,
     },
     {
       project_id: projectId,
       title: "Bold Utility",
-      summary: `A stronger product-facing direction for ${appName}, with confident contrast, punchier accents, and implementation-friendly button states.`,
+      summary: `A stronger product-facing direction for ${appName}, with confident contrast, punchier accents, and implementation-friendly visual surfaces.`,
       theme_notes: {
         tone: "confident, practical, high-contrast",
-        assetUse: ["home headers", "empty states", "button systems"],
+        assetUse: ["home headers", "empty states", "visual surfaces"],
       },
       is_selected: false,
     },

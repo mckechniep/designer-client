@@ -62,7 +62,7 @@ function FeedbackPendingNote() {
     <p className="mt-3 max-w-2xl rounded-md border border-cyan-900/70 bg-cyan-950/30 px-3 py-2 text-sm leading-6 text-cyan-100">
       Feedback regeneration started. This can take a few minutes because it
       edits from the previous image context, then rebuilds the full asset
-      package.
+      background package.
     </p>
   );
 }

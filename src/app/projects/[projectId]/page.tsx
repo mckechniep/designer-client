@@ -5,6 +5,7 @@ import { DirectionPicker } from "@/components/generation/direction-picker";
 import { FeedbackForm } from "@/components/generation/feedback-form";
 import { GeneratePackageForm } from "@/components/generation/generate-package-form";
 import { GenerationCounter } from "@/components/generation/generation-counter";
+import { PostBackgroundWorkflow } from "@/components/generation/post-background-workflow";
 import { AppShell } from "@/components/layout/app-shell";
 import { DeleteProjectForm } from "@/components/projects/delete-project-form";
 import { PaletteSystemPanel } from "@/components/projects/palette-system-panel";
@@ -27,10 +28,14 @@ type ProjectDetailParams = Promise<{
 }>;
 
 type ProjectDetailSearchParams = Promise<{
+  backgrounds?: string | string[] | undefined;
   error?: string | string[] | undefined;
   generated?: string | string[] | undefined;
+  icons?: string | string[] | undefined;
+  imagery?: string | string[] | undefined;
   palette?: string | string[] | undefined;
   references?: string | string[] | undefined;
+  typography?: string | string[] | undefined;
 }>;
 
 interface ProjectDetail {
@@ -44,6 +49,8 @@ interface BriefSummary {
   app_name: string;
   audience: string;
   desired_mood: string;
+  font_preferences: string;
+  icon_subjects: string[];
   reference_links: string[];
 }
 
@@ -117,11 +124,25 @@ const errorMessages: Record<string, string> = {
   "generation-limit": "This client has reached the generation limit.",
   "generation-record-failed":
     "We could not create the generation record before starting.",
+  "app-imagery-generation-failed":
+    "We could not generate the in-app image assets.",
+  "background-generation-failed":
+    "We could not generate the additional background plates.",
+  "icon-generation-failed": "We could not generate the optional icon sheet.",
+  "missing-background-subjects":
+    "Add at least one background type before expanding the set.",
+  "missing-app-imagery-items":
+    "Add at least one app image before generating in-app imagery.",
   "missing-brief": "This project needs a saved brief before generation.",
+  "missing-source-backgrounds":
+    "Generate the source background package before creating more backgrounds.",
+  "missing-screen-generation":
+    "Generate the source background package before creating optional icons.",
   "missing-palette":
     "Generate the light and dark palette system before creating assets.",
   "palette-generation-failed": "We could not generate the palette system.",
   "select-direction-first": "Select a design direction before generation.",
+  "typography-save-failed": "We could not save the font system.",
   "delete-project-failed": "We could not delete this project.",
   "delete-storage-failed":
     "We could not remove this project's generated files from storage.",
@@ -142,9 +163,13 @@ export default async function ProjectDetailPage({
   const { projectId } = await params;
   const resolvedSearchParams = await searchParams;
   const error = getParam(resolvedSearchParams.error);
+  const backgroundsGenerated = getParam(resolvedSearchParams.backgrounds);
   const generated = getParam(resolvedSearchParams.generated);
+  const iconsGenerated = getParam(resolvedSearchParams.icons);
+  const imageryGenerated = getParam(resolvedSearchParams.imagery);
   const paletteGenerated = getParam(resolvedSearchParams.palette);
   const references = getParam(resolvedSearchParams.references);
+  const typographySaved = getParam(resolvedSearchParams.typography);
   const message = error ? errorMessages[error] : undefined;
   const supabase = await createServerSupabaseClient();
 
@@ -185,7 +210,9 @@ export default async function ProjectDetailPage({
     await Promise.all([
       supabase
         .from("design_briefs")
-        .select("app_name, audience, desired_mood, reference_links")
+        .select(
+          "app_name, audience, desired_mood, font_preferences, icon_subjects, reference_links",
+        )
         .eq("project_id", projectId)
         .single<BriefSummary>(),
       supabase
@@ -343,6 +370,70 @@ export default async function ProjectDetailPage({
       : null,
     polledAt: new Date().toISOString(),
   };
+  const hasSourceBackgrounds =
+    latestGeneration?.status === "succeeded" &&
+    assetFiles.some((file) => file.kind === "screen_plain_light") &&
+    assetFiles.some((file) => file.kind === "screen_plain_dark");
+  const hasExpandedBackgrounds =
+    hasSourceBackgrounds &&
+    assetFiles.some((file) => file.kind === "background_plate_light") &&
+    assetFiles.some((file) => file.kind === "background_plate_dark");
+  const hasAppImagery = assetFiles.some((file) => file.kind === "app_image");
+  const hasTypography = Boolean(brief?.font_preferences.trim());
+  const hasIcons = assetFiles.some((file) => file.kind === "icon_set_showcase");
+  const postBackgroundDisabled =
+    !hasSourceBackgrounds ||
+    latestGeneration?.status === "running" ||
+    latestGeneration?.status === "queued";
+  const postBackgroundDisabledReason =
+    latestGeneration?.status === "running" ||
+    latestGeneration?.status === "queued"
+      ? "Wait for the current source background package to finish before continuing."
+      : "Generate the source background package first.";
+  const workflowSteps = [
+    {
+      href: "#palette-system",
+      label: "Palette",
+      status: paletteSystem ? "Done" : "Ready",
+    },
+    {
+      href: "#source-backgrounds",
+      label: "Source backgrounds",
+      status: !paletteSystem
+        ? "Locked"
+        : hasSourceBackgrounds
+          ? "Done"
+          : "Ready",
+    },
+    {
+      href: "#remaining-assets",
+      label: "Expand backgrounds",
+      status: !hasSourceBackgrounds
+        ? "Locked"
+        : hasExpandedBackgrounds
+          ? "Done"
+          : "Ready",
+    },
+    {
+      href: "#remaining-assets",
+      label: "App imagery",
+      status: !hasExpandedBackgrounds
+        ? "Locked"
+        : hasAppImagery
+          ? "Done"
+          : "Ready",
+    },
+    {
+      href: "#remaining-assets",
+      label: "Fonts",
+      status: !hasAppImagery ? "Locked" : hasTypography ? "Done" : "Ready",
+    },
+    {
+      href: "#remaining-assets",
+      label: "Optional icons",
+      status: !hasTypography ? "Locked" : hasIcons ? "Done" : "Optional",
+    },
+  ];
 
   return (
     <AppShell user={user}>
@@ -359,8 +450,11 @@ export default async function ProjectDetailPage({
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">
             {project.app_category} asset project for static mobile backgrounds,
-            source screens, and implementation-ready visual direction.
+            source background plates, and implementation-ready visual
+            direction.
           </p>
+
+          <ProjectWorkflowOverview steps={workflowSteps} />
 
           {message ? (
             <div
@@ -376,7 +470,43 @@ export default async function ProjectDetailPage({
               className="mt-6 rounded-md border border-cyan-900/80 bg-cyan-950/35 px-4 py-3 text-sm text-cyan-100"
               role="status"
             >
-              Asset package generated and saved.
+              Source background package generated and saved.
+            </div>
+          ) : null}
+
+          {backgroundsGenerated === "generated" ? (
+            <div
+              className="mt-6 rounded-md border border-cyan-900/80 bg-cyan-950/35 px-4 py-3 text-sm text-cyan-100"
+              role="status"
+            >
+              Additional background plates generated and saved.
+            </div>
+          ) : null}
+
+          {iconsGenerated === "generated" ? (
+            <div
+              className="mt-6 rounded-md border border-cyan-900/80 bg-cyan-950/35 px-4 py-3 text-sm text-cyan-100"
+              role="status"
+            >
+              Optional icon sheet generated and saved.
+            </div>
+          ) : null}
+
+          {imageryGenerated === "generated" ? (
+            <div
+              className="mt-6 rounded-md border border-cyan-900/80 bg-cyan-950/35 px-4 py-3 text-sm text-cyan-100"
+              role="status"
+            >
+              App imagery generated and saved.
+            </div>
+          ) : null}
+
+          {typographySaved === "saved" ? (
+            <div
+              className="mt-6 rounded-md border border-cyan-900/80 bg-cyan-950/35 px-4 py-3 text-sm text-cyan-100"
+              role="status"
+            >
+              Font system saved.
             </div>
           ) : null}
 
@@ -398,7 +528,7 @@ export default async function ProjectDetailPage({
             </div>
           ) : null}
 
-          <div className="mt-8">
+          <div className="mt-8" id="palette-system">
             <PaletteSystemPanel
               palette={paletteSystem}
               projectId={projectId}
@@ -417,13 +547,13 @@ export default async function ProjectDetailPage({
             </div>
           </div>
 
-          <div className="mt-8">
+          <div className="mt-8" id="source-backgrounds">
             <h2 className="text-lg font-semibold text-zinc-50">
-              Generate package
+              Generate source backgrounds
             </h2>
             <p className="mt-2 text-sm leading-6 text-zinc-400">
-              Create the first static mobile package from the selected
-              direction and saved brief.
+              Create the light and dark textless source background plates from
+              the selected direction and saved brief.
             </p>
             <div className="mt-4">
               <GeneratePackageForm
@@ -456,12 +586,35 @@ export default async function ProjectDetailPage({
               Freeform feedback
             </h2>
             <p className="mt-2 text-sm leading-6 text-zinc-400">
-              Use this after reviewing a generated package to create a new
-              iteration.
+              Use this after reviewing generated source backgrounds to create a
+              new source background iteration.
             </p>
             <div className="mt-4">
               <FeedbackForm
                 initialStatus={generationStatusSnapshot}
+                projectId={projectId}
+              />
+            </div>
+          </div>
+
+          <div className="mt-8" id="remaining-assets">
+            <h2 className="text-lg font-semibold text-zinc-50">
+              Build remaining assets
+            </h2>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-400">
+              Work through the remaining stages one at a time: expanded
+              backgrounds, app imagery, fonts, then optional icons.
+            </p>
+            <div className="mt-4">
+              <PostBackgroundWorkflow
+                disabled={postBackgroundDisabled}
+                disabledReason={postBackgroundDisabledReason}
+                hasAppImagery={hasAppImagery}
+                hasExpandedBackgrounds={hasExpandedBackgrounds}
+                hasIcons={hasIcons}
+                hasTypography={hasTypography}
+                initialFontPreferences={brief?.font_preferences ?? ""}
+                initialIconSubjects={brief?.icon_subjects ?? []}
                 projectId={projectId}
               />
             </div>
@@ -474,7 +627,9 @@ export default async function ProjectDetailPage({
                   Generated assets
                 </h2>
                 <p className="mt-2 text-sm leading-6 text-zinc-400">
-                  Latest package files with signed previews for image assets.
+                  Latest source backgrounds, expanded background plates,
+                  in-app imagery, palettes, and optional icon assets with
+                  signed previews.
                 </p>
               </div>
               {packageFile ? (
@@ -598,15 +753,68 @@ function sortDirections(directions: DirectionSummary[]) {
   });
 }
 
+function ProjectWorkflowOverview({
+  steps,
+}: {
+  steps: Array<{
+    href: string;
+    label: string;
+    status: string;
+  }>;
+}) {
+  return (
+    <nav
+      aria-label="Project generation steps"
+      className="sticky top-0 z-20 mt-6 overflow-x-auto border-y border-zinc-800 bg-zinc-950/95 py-3 backdrop-blur"
+    >
+      <ol className="grid min-w-[760px] grid-cols-6 gap-2">
+        {steps.map((step, index) => (
+          <li key={`${step.label}-${index}`}>
+            <a
+              className={`block min-h-24 rounded-md border px-3 py-3 transition focus:outline-none focus:ring-2 focus:ring-zinc-500 ${
+                step.status === "Done"
+                  ? "border-cyan-800 bg-cyan-950/30"
+                  : step.status === "Locked"
+                    ? "border-zinc-900 bg-zinc-950 text-zinc-600"
+                    : "border-zinc-800 bg-zinc-900/55 hover:border-zinc-600 hover:bg-zinc-900"
+              }`}
+              href={step.href}
+            >
+              <span className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
+                Step {index + 1}
+              </span>
+              <span className="mt-1 block text-sm font-semibold text-zinc-100">
+                {step.label}
+              </span>
+              <span
+                className={`mt-3 inline-flex rounded border px-2 py-0.5 text-xs font-semibold ${
+                  step.status === "Done"
+                    ? "border-cyan-800 bg-cyan-950/60 text-cyan-100"
+                    : step.status === "Locked"
+                      ? "border-zinc-900 bg-zinc-950 text-zinc-600"
+                      : "border-zinc-700 bg-zinc-950 text-zinc-300"
+                }`}
+              >
+                {step.status}
+              </span>
+            </a>
+          </li>
+        ))}
+      </ol>
+    </nav>
+  );
+}
+
 const assetKindOrder = [
   "thumbnail",
   "master_background",
   "screen_plain_light",
   "screen_plain_dark",
+  "background_plate_light",
+  "background_plate_dark",
+  "app_image",
   "palette_light",
   "palette_dark",
-  "buttons_light",
-  "buttons_dark",
   "icon_set_showcase",
   "icon_mark_light",
   "icon_mark_dark",
@@ -618,6 +826,8 @@ const deprecatedGalleryAssetKinds = new Set([
   "icon_set_dark",
   "screen_examples_light",
   "screen_examples_dark",
+  "buttons_light",
+  "buttons_dark",
   "splash",
 ]);
 

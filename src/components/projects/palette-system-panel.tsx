@@ -37,8 +37,8 @@ export function PaletteSystemPanel({
       <div className="border-t border-zinc-800 px-5 py-5">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <p className="max-w-2xl text-sm leading-6 text-zinc-400">
-            These exact tokens are the color contract for generated screens,
-            buttons, icons, and source backgrounds.
+            These exact tokens are the color contract for source backgrounds,
+            expanded background plates, app imagery, and optional icons.
           </p>
           <form action={generateProjectPalette.bind(null, projectId)}>
             <button
@@ -52,14 +52,14 @@ export function PaletteSystemPanel({
 
         {palette ? (
           <div className="mt-5 grid gap-4 xl:grid-cols-2">
-            <PaletteModePreview mode={palette.light} />
-            <PaletteModePreview mode={palette.dark} />
+            <PaletteModePreview label="Light" mode={palette.light} />
+            <PaletteModePreview label="Dark" mode={palette.dark} />
           </div>
         ) : (
           <div className="mt-5 rounded-md border border-zinc-800 bg-zinc-950/60 p-4">
             <p className="text-sm leading-6 text-zinc-400">
-              No palette has been generated yet. The asset package step uses
-              this palette as its color contract.
+              No palette has been generated yet. The source background package
+              step uses this palette as its color contract.
             </p>
           </div>
         )}
@@ -68,12 +68,23 @@ export function PaletteSystemPanel({
   );
 }
 
-function PaletteModePreview({ mode }: { mode: PaletteModeSpec }) {
+function PaletteModePreview({
+  label,
+  mode,
+}: {
+  label: "Dark" | "Light";
+  mode: PaletteModeSpec;
+}) {
+  const primary = findPaletteToken(mode, "primary") ?? mode.background;
+
   return (
     <div className="rounded-md border border-zinc-800 bg-zinc-950/60 p-4">
       <div>
-        <h3 className="text-sm font-semibold text-zinc-100">{mode.title}</h3>
+        <h3 className="text-sm font-semibold text-zinc-100">{label}</h3>
         <p className="mt-1 text-xs leading-5 text-zinc-500">
+          Primary {primary}
+        </p>
+        <p className="mt-1 text-xs leading-5 text-zinc-600">
           {mode.subtitle}
         </p>
       </div>
@@ -111,4 +122,16 @@ function PaletteModePreview({ mode }: { mode: PaletteModeSpec }) {
       </div>
     </div>
   );
+}
+
+function findPaletteToken(mode: PaletteModeSpec, tokenName: string) {
+  for (const group of mode.groups) {
+    const token = group.tokens.find((item) => item.name === tokenName);
+
+    if (token) {
+      return token.value;
+    }
+  }
+
+  return null;
 }

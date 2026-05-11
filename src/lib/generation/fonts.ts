@@ -4,6 +4,14 @@ export interface FontSystem {
   utility: string;
 }
 
+export interface FontPreferenceInput {
+  bodyFont: string;
+  displayFont: string;
+  fontPreferences: string;
+  fontPreset: string;
+  utilityFont: string;
+}
+
 const DEFAULT_FONT_SYSTEM: FontSystem = {
   body: "Inter",
   display: "Instrument Serif",
@@ -35,6 +43,26 @@ export function svgFontStack(fontName: string, role: keyof FontSystem) {
         : "Arial, Helvetica, sans-serif";
 
   return `&quot;${escapeFontFamily(fontName)}&quot;, ${familyFallback}`;
+}
+
+export function formatFontPreferences(input: FontPreferenceInput) {
+  return [
+    input.fontPreset ? `Suggested font pairing: ${input.fontPreset}.` : "",
+    input.displayFont
+      ? `Display / Voice font: ${input.displayFont}. Use for brand-first headlines, large moments, logos, and personality.`
+      : "",
+    input.bodyFont
+      ? `Body / Workhorse font: ${input.bodyFont}. Use for paragraphs, UI labels, navigation, buttons, forms, and most client-facing text. It should do roughly 80% of the typography work.`
+      : "",
+    input.utilityFont
+      ? `Utility / Accent font: ${input.utilityFont}. Use for timestamps, metadata, captions, data readouts, quotes, or small supporting moments.`
+      : "",
+    input.fontPreferences
+      ? `Additional client font notes: ${input.fontPreferences}`
+      : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
 function extractFont(input: string, pattern: RegExp) {

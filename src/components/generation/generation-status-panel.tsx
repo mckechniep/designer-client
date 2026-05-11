@@ -124,7 +124,7 @@ export function GenerationStatusPanel({
   return (
     <div
       aria-live="polite"
-      className={`mt-4 rounded-md border px-4 py-3 ${toneClasses[presentation.tone]}`}
+      className={`mt-4 w-full rounded-md border px-4 py-3 ${toneClasses[presentation.tone]}`}
     >
       <div className="flex items-start gap-3">
         {presentation.tone === "running" ? <Spinner /> : null}

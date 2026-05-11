@@ -17,7 +17,10 @@ export function GeneratePackageForm({
   projectId: string;
 }) {
   return (
-    <form action={generateAssetPackage.bind(null, projectId)}>
+    <form
+      action={generateAssetPackage.bind(null, projectId)}
+      className="grid gap-3"
+    >
       <input type="hidden" name="feedback" value="" />
       <GenerateButton disabled={disabled} />
       {disabled ? (
@@ -44,7 +47,7 @@ function GenerateButton({ disabled }: { disabled: boolean }) {
       disabled={disabled || pending}
     >
       {pending ? <Spinner /> : null}
-      {pending ? "Generating package..." : "Generate asset package"}
+      {pending ? "Generating backgrounds..." : "Generate source backgrounds"}
     </button>
   );
 }
@@ -57,11 +60,11 @@ function GenerationPendingNote() {
   }
 
   return (
-    <p className="mt-3 max-w-2xl rounded-md border border-cyan-900/70 bg-cyan-950/30 px-3 py-2 text-sm leading-6 text-cyan-100">
+    <p className="rounded-md border border-cyan-900/70 bg-cyan-950/30 px-3 py-2 text-sm leading-6 text-cyan-100">
       Generation started. This can take a few minutes while the image model
-      creates the master asset and the app builds the downloadable package.
-      Keep this page open while it runs; the project will update when it
-      finishes.
+      creates the textless source backgrounds and the app builds the
+      downloadable background package. Keep this page open while it runs; the
+      project will update when it finishes.
     </p>
   );
 }

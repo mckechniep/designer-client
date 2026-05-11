@@ -58,12 +58,13 @@ export interface RuntimeAssetPalette {
 }
 
 export function buildPaletteSystem(input: PaletteBuildInput): PaletteSystem {
+  const inferredAnchors = inferPaletteAnchors(input);
   const primary = findAnchoredColor(input.likedColors, "primary") ??
     findHexColor(input.likedColors, 0) ??
-    "#0ea5e9";
+    inferredAnchors.primary;
   const accent = findAnchoredColor(input.likedColors, "accent") ??
     findHexColor(input.likedColors, 1) ??
-    rotateHue(primary, 48);
+    inferredAnchors.accent;
   const appName = input.appName.trim() || "App";
   const effects = buildEffectGroup(input, primary, accent);
 
@@ -83,10 +84,16 @@ export function buildPaletteSystem(input: PaletteBuildInput): PaletteSystem {
       likedColors: input.likedColors,
       primary,
       provider: "deterministic",
-      rationale: [
-        "Exact hex anchors were used when available.",
-        "Functional UI tokens were derived from the primary hue.",
-      ],
+      rationale:
+        input.likedColors.length > 0
+          ? [
+              "Exact hex anchors were used when available.",
+              "Functional UI tokens were derived from the primary hue.",
+            ]
+          : [
+              "No liked colors were provided, so anchors were inferred from app category, audience, and mood.",
+              "Functional UI tokens were derived from the inferred primary hue.",
+            ],
       warnings: [],
     },
     summary: [
@@ -111,6 +118,52 @@ export function formatPaletteSystemForPrompt(palette: PaletteSystem | null) {
     formatModeForPrompt(palette.light),
     formatModeForPrompt(palette.dark),
   ].join("\n");
+}
+
+function inferPaletteAnchors(input: PaletteBuildInput) {
+  const context = [
+    input.appCategory,
+    input.audience,
+    input.desiredMood,
+    input.appName,
+  ]
+    .join(" ")
+    .toLowerCase();
+
+  if (matchesAny(context, ["parent", "baby", "care", "calm", "wellness"])) {
+    return { accent: "#d8a7a1", primary: "#b7791f" };
+  }
+
+  if (matchesAny(context, ["fitness", "health", "workout", "training"])) {
+    return { accent: "#84cc16", primary: "#0f766e" };
+  }
+
+  if (matchesAny(context, ["finance", "bank", "invest", "budget"])) {
+    return { accent: "#14b8a6", primary: "#1d4ed8" };
+  }
+
+  if (matchesAny(context, ["education", "learn", "school", "study"])) {
+    return { accent: "#0ea5e9", primary: "#4f46e5" };
+  }
+
+  if (matchesAny(context, ["music", "dj", "club", "neon", "cyber"])) {
+    return { accent: "#c026d3", primary: "#0891b2" };
+  }
+
+  if (matchesAny(context, ["luxury", "premium", "fashion", "editorial"])) {
+    return { accent: "#b45309", primary: "#334155" };
+  }
+
+  const primary = hslToHex(hashHue(context || "mobile app"), 68, 42);
+
+  return {
+    accent: rotateHue(primary, 48),
+    primary,
+  };
+}
+
+function matchesAny(value: string, terms: string[]) {
+  return terms.some((term) => value.includes(term));
 }
 
 export function paletteModeToAssetPalette(
@@ -417,6 +470,17 @@ function findHexColor(values: string[], index: number) {
 function rotateHue(hex: string, amount: number) {
   const hsl = hexToHsl(hex);
   return hslToHex((hsl.h + amount) % 360, hsl.s, hsl.l);
+}
+
+function hashHue(value: string) {
+  let hash = 2166136261;
+
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+
+  return (hash >>> 0) % 360;
 }
 
 function lighten(hex: string, amount: number) {

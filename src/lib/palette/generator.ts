@@ -77,7 +77,7 @@ export async function generatePaletteSystem(
           "Functional UI tokens must remain readable and professional. Do not use glow colors as body text or primary surfaces.",
           "If effectPreference is none, omit the Effects / Atmosphere group.",
           "If effectPreference is subtle, use restrained effect tokens for gentle depth, gradients, or bloom.",
-          "If effectPreference is expressive, glow/neon tokens are allowed only for generated imagery, source screens, hero backgrounds, aura, and rim-light effects.",
+          "If effectPreference is expressive, glow/neon tokens are allowed only for generated imagery, source backgrounds, hero backgrounds, aura, and rim-light effects.",
           "If exact Primary anchor or Accent anchor hex values are present, preserve them as source.primary/source.accent and the --primary token unless readability requires a state adjustment.",
           "Treat disliked colors as disallowed for brand identity, primary/accent, base surfaces, decorative effects, and dominant imagery.",
           "Do not remove or neutralize required semantic status tokens just because a disliked color word overlaps a UI convention. If red is disliked, still provide an accessible --danger and --danger-soft, but make it subdued, professional, and limited to error/destructive UI states only.",

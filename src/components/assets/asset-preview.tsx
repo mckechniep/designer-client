@@ -8,14 +8,16 @@ export function AssetPreview({
   return (
     <div className="overflow-hidden rounded-md border border-zinc-800 bg-zinc-900/45">
       {src ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={src}
-          alt="Latest generated asset preview"
-          className="aspect-[9/16] w-full object-cover"
-        />
+        <div className="h-80 overflow-hidden bg-zinc-950">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={src}
+            alt="Latest generated asset preview"
+            className="h-full w-full object-cover"
+          />
+        </div>
       ) : (
-        <div className="flex aspect-[9/16] items-center justify-center px-4 text-center text-sm text-zinc-500">
+        <div className="flex h-80 items-center justify-center px-4 text-center text-sm text-zinc-500">
           No generated assets yet
         </div>
       )}

@@ -5,7 +5,14 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireUser } from "@/lib/auth/require-user";
 import { env } from "@/lib/env";
+import { formatFontPreferences } from "@/lib/generation/fonts";
 import { initialMaxGenerationsForEmail } from "@/lib/generation/limits";
+import { generateIconSubjectList } from "@/lib/icons/generator";
+import {
+  iconSubjectInputSignature,
+  normalizeIconSubjects,
+} from "@/lib/icons/input";
+import type { IconSubjectPreviewState } from "@/lib/icons/preview-state";
 import { generatePaletteSystem } from "@/lib/palette/generator";
 import {
   normalizePaletteEffectPreference,
@@ -38,6 +45,7 @@ const projectSchema = z.object({
   referenceLinks: z.string().trim().default(""),
   visualDislikes: z.string().trim().default(""),
   brandNotes: z.string().trim().default(""),
+  iconSubjects: z.string().trim().default(""),
   primaryColor: z.string().trim().default(""),
   usePrimaryColor: z.string().trim().default(""),
   accentColor: z.string().trim().default(""),
@@ -100,6 +108,7 @@ export async function createProject(formData: FormData) {
     referenceLinks: getString(formData, "referenceLinks"),
     visualDislikes: getString(formData, "visualDislikes"),
     brandNotes: getString(formData, "brandNotes"),
+    iconSubjects: getString(formData, "iconSubjects"),
     primaryColor: getString(formData, "primaryColor"),
     usePrimaryColor: getString(formData, "usePrimaryColor"),
     accentColor: getString(formData, "accentColor"),
@@ -123,6 +132,10 @@ export async function createProject(formData: FormData) {
     ...exactColorsFromInput(input),
   ];
   const dislikedColors = splitLines(input.dislikedColors);
+  const iconSubjects = normalizeIconSubjects(splitLines(input.iconSubjects), {
+    appCategory: input.appCategory,
+    appName: input.appName,
+  });
   const paletteInput = buildPaletteGenerationInput({
     appCategory: input.appCategory,
     appName: input.appName,
@@ -132,7 +145,7 @@ export async function createProject(formData: FormData) {
     effectPreference: input.effectPreference,
     likedColors,
   });
-  const fontPreferences = fontPreferencesFromInput(input);
+  const fontPreferences = formatFontPreferences(input);
   const supabase = await createServerSupabaseClient();
   const { data: project, error: projectError } = await supabase
     .from("projects")
@@ -160,6 +173,7 @@ export async function createProject(formData: FormData) {
     effect_preference: paletteInput.effectPreference,
     font_preferences: fontPreferences,
     reference_links: referenceLinks,
+    icon_subjects: iconSubjects,
     visual_dislikes: input.visualDislikes,
     brand_notes: input.brandNotes,
   });
@@ -423,6 +437,46 @@ export async function previewProjectReferenceAnalysis(
   }
 }
 
+export async function previewProjectIconSubjects(
+  _state: IconSubjectPreviewState,
+  formData: FormData,
+): Promise<IconSubjectPreviewState> {
+  await requireUser();
+
+  const iconInput = buildIconSubjectGenerationInput(formData);
+
+  if (
+    iconInput.appName.length < 2 ||
+    (iconInput.appCategory?.length ?? 0) < 2 ||
+    (iconInput.audience?.length ?? 0) < 2 ||
+    (iconInput.desiredMood?.length ?? 0) < 2
+  ) {
+    return {
+      errorMessage:
+        "Add app name, app category, audience, and desired mood before generating icon subjects.",
+      status: "failed",
+    };
+  }
+
+  try {
+    const subjects = await generateIconSubjectList(iconInput);
+
+    return {
+      inputSignature: iconSubjectInputSignature(iconInput),
+      status: "generated",
+      subjects,
+    };
+  } catch (error) {
+    return {
+      errorMessage:
+        error instanceof Error
+          ? error.message
+          : "Icon subject generation failed. Try again.",
+      status: "failed",
+    };
+  }
+}
+
 export async function deleteProject(projectId: string) {
   await requireUser();
   const supabase = await createServerSupabaseClient();
@@ -576,6 +630,30 @@ function buildPaletteGenerationInput(input: {
   };
 }
 
+function buildIconSubjectGenerationInput(formData: FormData) {
+  const paletteJson = getString(formData, "approvedPaletteJson");
+  const palette = parsePaletteSystemJson(paletteJson);
+
+  return {
+    appCategory: getString(formData, "appCategory"),
+    appName: getString(formData, "appName"),
+    audience: getString(formData, "audience"),
+    desiredMood: getString(formData, "desiredMood"),
+    dislikedColors: splitLines(getString(formData, "dislikedColors")),
+    likedColors: [
+      ...splitLines(getString(formData, "likedColors")),
+      ...exactColorsFromInput({
+        accentColor: getString(formData, "accentColor"),
+        primaryColor: getString(formData, "primaryColor"),
+        useAccentColor: getString(formData, "useAccentColor"),
+        usePrimaryColor: getString(formData, "usePrimaryColor"),
+      }),
+    ],
+    paletteSignature: getString(formData, "approvedPaletteSignature"),
+    paletteSummary: palette?.summary ?? "",
+  };
+}
+
 function parseApprovedPalette(
   approvedPaletteJson: string,
   approvedPaletteSignature: string,
@@ -602,34 +680,6 @@ function exactColorsFromInput(input: {
       ? `Accent anchor ${input.accentColor}`
       : "",
   ].filter(Boolean);
-}
-
-function fontPreferencesFromInput(input: {
-  bodyFont: string;
-  displayFont: string;
-  fontPreferences: string;
-  fontPreset: string;
-  utilityFont: string;
-}) {
-  return [
-    input.fontPreset ? `Suggested font pairing: ${input.fontPreset}.` : "",
-    input.displayFont
-      ? `Display / Voice font: ${input.displayFont}. Use for brand-first large titles, hero moments, logos, pull quotes, and identity-heavy text. Keep it expressive but limited to roughly 5% of the interface.`
-      : "",
-    input.bodyFont
-      ? `Body / Workhorse font: ${input.bodyFont}. Use for paragraphs, UI labels, navigation, buttons, forms, and most client-facing text. It should do roughly 80% of the typography work.`
-      : "",
-    input.utilityFont
-      ? `Utility / Accent font: ${input.utilityFont}. Use sparingly for data, timestamps, IDs, tabular details, technical metadata, pull quotes, or specialty accent moments. Keep it to roughly 15% or less.`
-      : "",
-    "Typography hierarchy rule: body/workhorse carries readability; display and utility should support hierarchy without taking over dense UI surfaces.",
-    input.fontPreferences
-      ? `Additional client font notes: ${input.fontPreferences}`
-      : "",
-  ]
-    .map((value) => value.trim())
-    .filter(Boolean)
-    .join("\n");
 }
 
 function isHexColor(value: string) {

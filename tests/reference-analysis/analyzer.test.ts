@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { summarizeReferenceAnalysis } from "@/lib/reference-analysis/analyzer";
+import {
+  analyzeReferenceUrls,
+  summarizeReferenceAnalysis,
+} from "@/lib/reference-analysis/analyzer";
 import type { UIAnalysisPack } from "@/lib/reference-analysis/analyzer";
 
 describe("reference analysis summary", () => {
@@ -81,5 +84,13 @@ describe("reference analysis summary", () => {
     expect(summarizeReferenceAnalysis(analysis)).toContain("#c5a55a");
     expect(summarizeReferenceAnalysis(analysis)).toContain("Newsreader");
     expect(summarizeReferenceAnalysis(analysis)).toContain("copied logos");
+  });
+
+  it("does not inject fallback colors when no references are supplied", async () => {
+    const result = await analyzeReferenceUrls([]);
+
+    expect(result.status).toBe("skipped");
+    expect(result.summary).toContain("No reference websites were supplied");
+    expect(result.summary).not.toContain("#06121f");
   });
 });

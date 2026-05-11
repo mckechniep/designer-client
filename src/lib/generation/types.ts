@@ -21,6 +21,7 @@ export interface MasterAssetPromptInput {
   likedColors: string[];
   dislikedColors: string[];
   fontPreferences: string;
+  iconSubjects: string[];
   paletteSystem: string;
   referenceAnalysis: string;
   referenceLinks: string[];
